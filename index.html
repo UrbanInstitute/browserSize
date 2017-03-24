@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+
+<head>
+	<style>
+	body{
+		font-family: Lato;
+	}
+
+
+	.axis path,
+	.axis line {
+	  fill: none;
+	  stroke: #000;
+	  shape-rendering: crispEdges;
+	}
+	.y.axis path{
+		display: none;
+	}
+	.header{
+		font-size: 50px;
+		text-indent: 40px;
+	}
+	.tooltip{
+		text-indent: 40px;
+    	font-style: italic;
+    	height: 40px;
+    	font-size: 18px;
+	}
+	#linkAway{
+		font-size: 22px;
+    	text-indent: 40px;
+    	margin-bottom: 20px;
+	}
+	#linkAway a{
+		color: #1696d2;
+		text-decoration: none;
+	}
+	</style>
+</head>
+
+<body>
+<div id = "linkAway">Click <a href = "allpages.html">here</a> for alternate visual</div>
+<div class = "header">Widths</div>
+<div id = "widthContainer"></div>
+<div id = "widthText" class = "tooltip">Hover for detailed data</div>
+	
+
+<div class = "header">Heights</div>
+<div id = "heightContainer"></div>
+<div id = "heightText" class = "tooltip">Hover for detailed data</div>
+
+<div class = "header">Aspect ratio</div>
+<div id = "aspectRatioContainer"></div>
+<div id = "aspectRatioText" class = "tooltip">Hover for detailed data</div>
+
+<script src="http://d3js.org/d3.v3.min.js"></script>
+
+<script>
+
+function drawGraph(col, barwidth, filename){
+
+	var margin = {top: 20, right: 20, bottom: 70, left: 90},
+	    width = 800 - margin.left - margin.right,
+	    height = 500 - margin.top - margin.bottom;
+
+	// Parse the date / time
+
+	var x =  d3.scale.linear().range([0, width], .05);
+
+	var y = d3.scale.linear().range([height, 0]);
+
+	var xAxis = d3.svg.axis()
+	    .scale(x)
+	    .orient("bottom")
+
+	var yAxis = d3.svg.axis()
+	    .scale(y)
+	    .orient("left")
+	    .ticks(10)
+	    .tickFormat(d3.format('s'));
+
+	var svg = d3.select("#" + col + "Container").append("svg")
+	    .attr("width", width + margin.left + margin.right)
+	    .attr("height", height + margin.top + margin.bottom)
+	  .append("g")
+	    .attr("transform", 
+	          "translate(" + margin.left + "," + margin.top + ")");
+
+	d3.csv("data/" + filename + ".csv", function(error, data) {
+
+	    data.forEach(function(d) {
+	        d[col] = +d[col];
+	        d.pageviews = +d.pageviews;
+	    });
+
+	  if (col == "aspectRatio"){
+	  	x.domain([0, 3]);	
+	  }else{
+	  	x.domain([0, d3.max(data, function(d) { return d[col]; })]);
+	  }
+	  y.domain([0, d3.max(data, function(d) { return d.pageviews; })]);
+
+	  svg.append("g")
+	      .attr("class", "x axis")
+	      .attr("transform", "translate(0," + height + ")")
+	      .call(xAxis)
+	    .selectAll("text")
+	      .style("text-anchor", "end")
+	      .attr("dx", ".8em")
+
+	  svg.append("g")
+	      .attr("class", "y axis")
+	      .call(yAxis)
+	d3.selectAll(".y.axis .tick line")
+		.attr("x2", width)
+		.style("stroke", "#dedddd")
+
+	  svg.selectAll("bar")
+	      .data(data)
+	    .enter().append("rect")
+	      .style("fill", "#1696d2")
+	      .attr("x", function(d) { return x(d[col]); })
+	      .attr("width", barwidth)
+	      .attr("y", function(d) { return y(d.pageviews); })
+	      .attr("height", function(d) { return height - y(d.pageviews); })
+	      .on("mouseover", function(d){
+	      	var comma = d3.format(",")
+	      	var s = d3.format("s")
+	      	d3.select(this)
+	      		.style("fill", "#fdbf11")
+	      	d3.select("#" + col + "Text").text( col + ": " + comma(d[col]) + " Pageviews: " + comma(d.pageviews))
+
+	      })
+	      .on("mouseout", function(d){
+	      	d3.select(this).style("fill", "#1696d2")
+	      })
+
+
+	});
+}
+drawGraph("width", 2.5, "widths")
+drawGraph("height", 2.5, "heights")
+drawGraph("aspectRatio", 2, "aspectRatios")
+
+
+
+
+
+
+
+
+</script>
+
+</body>
